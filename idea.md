@@ -15,11 +15,10 @@ Design a comprehensive, automated data pipeline for aggregating, analyzing, and 
    - Job Boards APIs
    - Web Scraping Endpoints
    - Potential Sources:
-     * RemoteOK
-     * WeWorkRemotely
+     * Upwork
      * LinkedIn Jobs
-     * Stack Overflow Jobs
      * GitHub Jobs
+     * Stack Overflow Jobs
 
 2. **Data Ingestion Layer**
    - Fetch job postings from multiple sources

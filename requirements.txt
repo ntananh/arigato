@@ -1,3 +1,10 @@
-feedparser
-newspaper3k
-vaderSentiment
+apache-airflow==2.10.5
+apache-airflow-providers-telegram
+apache-airflow-providers-slack
+requests
+beautifulsoup4
+pandas
+pyyaml
+sqlalchemy
+scikit-learn
+
