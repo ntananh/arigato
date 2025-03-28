@@ -1,3 +1,4 @@
+import json
 import math
 import random
 import time
@@ -36,17 +37,16 @@ class LinkedinHook(BaseHook, LoggingMixin):
         self.base_search_url = 'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search'
         self.job_details_url = 'https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{}'
 
+        headers_file = open("include/config/headers.json")
+        self.headers = dict(json.load(headers_file))
+
     def get_conn(self) -> requests.Session:
         """
         Create a connection to LinkedIn.
         :return: Requests session
         """
         session = requests.Session()
-        session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                          "AppleWebKit/537.36 (KHTML, like Gecko) "
-                          "Chrome/107.0.0.0 Safari/537.36"
-        })
+        session.headers.update(self.headers)
 
         if self.linkedin_conn_id:
             try:
@@ -119,7 +119,7 @@ class LinkedinHook(BaseHook, LoggingMixin):
         :return: Dictionary of job details
         """
         try:
-            self.log.info(f"Extracing job details for: #{job_id}")
+            self.log.debug(f"Extracing job details for: #{job_id}")
 
             url = self.job_details_url.format(job_id)
             response = self._get_with_backoff(session, url)
@@ -129,7 +129,15 @@ class LinkedinHook(BaseHook, LoggingMixin):
                 "company": None,
                 "job_title": None,
                 "level": None,
-                "location": None
+                "location": None,
+                "description": None,
+                "posted_at": None,
+                "updated_at": None,
+                "crawled_at": None,
+                "job_function": None,
+                "employment_type": None,
+                "applicants": None,
+                "industries": None,
             }
             try:
                 job_info["company"] = soup.find("div", {"class": "top-card-layout__card"}).find("a").find("img").get('alt')
@@ -152,7 +160,18 @@ class LinkedinHook(BaseHook, LoggingMixin):
             except Exception:
                 self.log.warning(f"Could not extract seniority level for job {job_id}")
 
-            self.log.info(f"Got job details for: #{job_id}")
+            try:
+                description_section = soup.find("section", class_="core-section-container my-3 description")
+                if description_section:
+                    rich_text_div = description_section.find("div", class_="description__text description__text--rich")
+                    if rich_text_div:
+                        job_info["description"] = rich_text_div.get_text(separator="\n", strip=True)
+                else:
+                    self.log.warning(f"Could not extract location for job {job_id}")
+            except Exception:
+                self.log.warning(f"Could not extract seniority level for job {job_id}")
+
+            self.log.debug(f"Got job details for: #{job_id}")
             return job_info
         except requests.RequestException as e:
             self.log.error(f"Error fetching job details for {job_id}: {e}")
@@ -165,7 +184,7 @@ class LinkedinHook(BaseHook, LoggingMixin):
         """
         try:
             session = self.get_conn()
-            job_ids = self._get_job_ids(session, max_pages=100)
+            job_ids = self._get_job_ids(session, max_pages=5)
             self.log.info(f"Total job IDs found: {len(job_ids)}")
             job_details = []
             for job_id in job_ids:
