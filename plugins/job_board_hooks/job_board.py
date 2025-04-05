@@ -1,25 +1,42 @@
-import requests
-
+"""
+JobBoard - Abstract base class for all job board hooks
+"""
 from abc import ABC, abstractmethod
+from typing import List, Dict, Any, Optional
 
-from plugins.auths.strategy.auth_strategy import AuthStrategy
-
-class JobBoardHook(ABC):
+class JobBoard(ABC):
     """
-    Abstract base class for hooks that fetch job postings from
-    various job boards or APIs.
-    """
+    Abstract base class defining the interface for job board hooks.
 
-    def __init__(self, auth_strategy: AuthStrategy):
-        self.auth_strategy = auth_strategy
-        self.session = requests.Session()
-        self.auth_strategy.authenticate(self.session)
+    All job board implementations should inherit from this class
+    and implement its methods.
+    """
 
     @abstractmethod
-    def fetch_jobs(self) -> list:
+    def search_jobs(
+        self,
+        job_type: str,
+        location: Optional[str] = None,
+        keywords: Optional[List[str]] = None,
+        max_results: int = 50
+    ) -> List[Dict[str, Any]]:
         """
-        Fetch job postings from the job board.
+        Search for jobs based on criteria.
+
+        Parameters:
+        -----------
+        job_type : str
+            The type of job to search for (e.g., "software engineer")
+        location : Optional[str]
+            Location to search in (e.g., "remote", "New York")
+        keywords : Optional[List[str]]
+            List of keywords to include in search
+        max_results : int
+            Maximum number of results to return
+
         Returns:
-            list of job postings (dicts, JSON objects, or similar).
+        --------
+        List[Dict[str, Any]]
+            List of job postings as dictionaries
         """
         pass

@@ -1,0 +1,39 @@
+core:
+  sql_alchemy_conn: postgresql+psycopg2://username:password@localhost:5432/airflow
+  executor: LocalExecutor
+
+database:
+  sql_alchemy_conn: postgresql+psycopg2://username:password@localhost:5432/airflow
+
+# Job Search Pipeline Configuration
+
+default_args:
+  owner: 'admin'
+  retries: 2
+  retry_delay:
+    minutes: 3
+  execution_timeout:
+    minutes: 60
+
+dag:
+  schedule_interval: '0 8 * * *'  # Run daily at 8 AM
+  start_date: '2025-03-15'
+  catchup: false
+  tags:
+    - 'jobs'
+    - 'data_pipeline'
+    - 'tech_jobs'
+
+email:
+  to: 'tony@tuni.fi'
+  subject: 'Daily Job Matches'
+
+apis:
+  linkedin:
+    enabled: true
+    rate_limit: 5
+    max_results: 30
+  upwork:
+    enabled: true
+    rate_limit: 5
+    max_results: 30

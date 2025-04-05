@@ -1,0 +1,59 @@
+job_types:
+  - backend
+  - full-stack
+  - software engineer
+
+skills:
+  must_have:
+    - python
+    - sql
+    - api
+  nice_to_have:
+    - docker
+    - kubernetes
+    - aws
+    - airflow
+    - data engineering
+
+locations:
+  remote: true
+  countries:
+    - Finland
+    - Sweden
+    - Norway
+    - Denmark
+    - Estonia
+  exclude_regions: []
+
+experience_level:
+  - mid
+  - senior
+
+min_salary: 60000
+
+keywords:
+  - remote
+  - backend
+  - python
+  - data pipeline
+
+excluded_terms:
+  - wordpress
+  - php
+  - junior
+
+company_types:
+  - startup
+  - tech
+  - established
+
+scoring:
+  skill_match_weight: 0.4
+  location_weight: 0.2
+  salary_weight: 0.2
+  company_weight: 0.1
+  job_description_weight: 0.1
+
+notification:
+  min_score: 0.7
+  daily_limit: 5

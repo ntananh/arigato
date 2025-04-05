@@ -15,8 +15,10 @@ Design a comprehensive, automated data pipeline for aggregating, analyzing, and 
    - Job Boards APIs
    - Web Scraping Endpoints
    - Potential Sources:
-     * Upwork
-     * LinkedIn Jobs
+     * RemoteOk
+     * Indeed
+     * Upwork (not allowed)
+     * LinkedIn Jobs (not allowed)
      * GitHub Jobs
      * Stack Overflow Jobs
 
@@ -84,7 +86,7 @@ graph TD
 
 ## 4. Technology Stack
 - **Programming Language**: Python
-- **Data Processing**: 
+- **Data Processing**:
   * Apache Airflow
   * Pandas
   * BeautifulSoup
