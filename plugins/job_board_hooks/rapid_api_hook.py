@@ -11,18 +11,17 @@ from plugins.job_board_hooks.job_board import JobBoard
 from plugins.auths.strategy.api_key_auth import ApiKeyAuth
 from plugins.auths.strategy.auth_strategy import AuthStrategy
 
-
-class DynamicRapidApiHook(JobBoard):
+class RapidApiGateway(JobBoard):
     API_CONFIGS = {
         'linkedin': {
             'host': 'linkedin-job-search-api.p.rapidapi.com',
             'base_url': '/active-jb-7d',
-            'output_file': 'data/linkedin_jobs.json'
+            'output_file': 'data/json/linkedin_jobs.json'
         },
         'upwork': {
-            'host': 'jsearch.p.rapidapi.com',
-            'base_url': '/search',
-            'output_file': 'data/upwork_jobs.json'
+            'host': 'upwork-jobs-api2.p.rapidapi.com',
+            'base_url': '/active-freelance-24h',
+            'output_file': 'data/json/upwork_jobs.json'
         }
     }
 
@@ -74,7 +73,7 @@ class DynamicRapidApiHook(JobBoard):
         job_type: str,
         location: Optional[str] = None,
         keywords: Optional[List[str]] = None,
-        max_results: int = 50
+        max_results: int = 100
     ) -> List[Dict[str, Any]]:
         self.logger.info(f"Searching {self.api_name} jobs for {job_type}")
 
@@ -93,7 +92,7 @@ class DynamicRapidApiHook(JobBoard):
         job_type: str,
         location: Optional[str] = None,
         keywords: Optional[List[str]] = None,
-        max_results: int = 50
+        max_results: int = 100
     ) -> Dict[str, Any]:
         if self.api_name == 'linkedin':
             return self._build_linkedin_params(job_type, location, keywords, max_results)
@@ -161,7 +160,7 @@ class DynamicRapidApiHook(JobBoard):
         cls,
         api_name: str,
         api_key: Optional[str] = None
-    ) -> 'DynamicRapidApiHook':
+    ) -> 'RapidApiGateway':
         return cls(
             api_name=api_name,
             api_key=api_key
