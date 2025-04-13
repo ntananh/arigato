@@ -1,13 +1,10 @@
 import os
-import json
 import yaml
 import pickle
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Tuple
 import re
 import nltk
-from nltk.tokenize import word_tokenize
+
+from typing import Dict, Any, List
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -21,24 +18,8 @@ try:
 except LookupError:
     nltk.download('stopwords')
 
-
 class JobMatcherModel:
-    """
-    ML model for matching jobs with user preferences.
-
-    This model uses TF-IDF and cosine similarity to match job descriptions
-    with user preferences.
-    """
-
     def __init__(self, preferences_path: str):
-        """
-        Initialize the JobMatcherModel.
-
-        Parameters:
-        -----------
-        preferences_path : str
-            Path to the YAML file containing user preferences
-        """
         self.preferences = self._load_preferences(preferences_path)
         self.stop_words = set(stopwords.words('english'))
         self.vectorizer = TfidfVectorizer(
@@ -55,19 +36,6 @@ class JobMatcherModel:
             self._initialize_model()
 
     def _load_preferences(self, path: str) -> Dict[str, Any]:
-        """
-        Load user preferences from YAML file.
-
-        Parameters:
-        -----------
-        path : str
-            Path to the YAML file
-
-        Returns:
-        --------
-        Dict[str, Any]
-            User preferences
-        """
         try:
             with open(path, 'r') as file:
                 return yaml.safe_load(file)
@@ -76,8 +44,6 @@ class JobMatcherModel:
             return {}
 
     def _initialize_model(self) -> None:
-        """Initialize a new model with user preferences"""
-        # Create preference vectors
         must_have_skills = self.preferences.get(
             'skills', {}).get('must_have', [])
         nice_to_have_skills = self.preferences.get(
@@ -98,11 +64,9 @@ class JobMatcherModel:
             'preference_vector': self.vectorizer.transform([preference_doc])
         }
 
-        # Save model
         self._save_model()
 
     def _load_model(self) -> None:
-        """Load model from file"""
         try:
             with open(self.model_path, 'rb') as file:
                 self.model_data = pickle.load(file)
@@ -112,7 +76,6 @@ class JobMatcherModel:
             self._initialize_model()
 
     def _save_model(self) -> None:
-        """Save model to file"""
         try:
             os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
             with open(self.model_path, 'wb') as file:
@@ -121,19 +84,6 @@ class JobMatcherModel:
             print(f"Error saving model: {str(e)}")
 
     def match_job(self, job_data: Dict[str, Any]) -> Dict[str, float]:
-        """
-        Match a job with user preferences.
-
-        Parameters:
-        -----------
-        job_data : Dict[str, Any]
-            Job data to match
-
-        Returns:
-        --------
-        Dict[str, float]
-            Match scores
-        """
         # Calculate text similarity score
         description = job_data.get('job_description', '')
         title = job_data.get('job_title', '')
@@ -185,19 +135,6 @@ class JobMatcherModel:
         }
 
     def _calculate_text_similarity(self, text: str) -> float:
-        """
-        Calculate text similarity score between job text and preference text.
-
-        Parameters:
-        -----------
-        text : str
-            Job text
-
-        Returns:
-        --------
-        float
-            Similarity score (0-1)
-        """
         # Clean text - remove special characters, lowercase
         clean_text = re.sub(r'[^\w\s]', ' ', text.lower())
 
@@ -226,19 +163,6 @@ class JobMatcherModel:
         return max(0, min(final_score, 1.0))
 
     def _calculate_skill_score(self, job_skills: List[str]) -> float:
-        """
-        Calculate match score for job skills against preferences.
-
-        Parameters:
-        -----------
-        job_skills : List[str]
-            List of skills from the job
-
-        Returns:
-        --------
-        float
-            Skill match score (0-1)
-        """
         must_have_skills = self.preferences.get(
             'skills', {}).get('must_have', [])
         nice_to_have_skills = self.preferences.get(
@@ -266,21 +190,6 @@ class JobMatcherModel:
         return 0.7 * must_have_score + 0.3 * nice_to_have_score
 
     def _calculate_location_score(self, location: str, is_remote: bool) -> float:
-        """
-        Calculate match score for job location against preferences.
-
-        Parameters:
-        -----------
-        location : str
-            Job location
-        is_remote : bool
-            Whether the job is remote
-
-        Returns:
-        --------
-        float
-            Location match score (0-1)
-        """
         preferred_remote = self.preferences.get(
             'locations', {}).get('remote', False)
         preferred_countries = self.preferences.get(
@@ -358,19 +267,6 @@ class JobMatcherModel:
             return 0.5  # No salary info, neutral score
 
     def _calculate_company_score(self, company_name: str) -> float:
-        """
-        Calculate match score for company against preferences.
-
-        Parameters:
-        -----------
-        company_name : str
-            Company name
-
-        Returns:
-        --------
-        float
-            Company match score (0-1)
-        """
         company_types = self.preferences.get('company_types', [])
 
         # This would ideally use a company database or API to get company type
