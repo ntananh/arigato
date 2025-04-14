@@ -166,12 +166,79 @@ class HtmlReportTask(BaseOperator):
             padding: 1.5rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border-color);
+            position: relative;
+            transition: all 0.3s ease;
+        }}
+
+        .chart-container.expanded {{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            max-width: 1200px;
+            z-index: 1000;
+            overflow: auto;
+        }}
+
+        .overlay {{
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }}
+
+        .expand-button {{
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.2s;
+        }}
+
+        .expand-button:hover {{
+            background-color: var(--secondary-color);
+        }}
+
+        .close-button {{
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            z-index: 1001;
+        }}
+
+        .close-button:hover {{
+            background-color: var(--secondary-color);
         }}
 
         .chart-img {{
             width: 100%;
             height: auto;
             margin-top: 1rem;
+        }}
+
+        .chart-container.expanded .chart-img {{
+            max-height: calc(80vh - 100px);
+            object-fit: contain;
         }}
 
         .job-cards {{
@@ -300,16 +367,19 @@ class HtmlReportTask(BaseOperator):
 
         <h2>Visualizations</h2>
         <div class="visualizations">
-            <div class="chart-container">
+            <div id="chart1" class="chart-container">
                 <h3>Match Score Distribution</h3>
+                <button class="expand-button" onclick="expandChart('chart1')">Expand</button>
                 <img src="data:image/png;base64,{score_chart}" alt="Match Score Distribution" class="chart-img">
             </div>
-            <div class="chart-container">
+            <div id="chart2" class="chart-container">
                 <h3>Top Skills</h3>
+                <button class="expand-button" onclick="expandChart('chart2')">Expand</button>
                 <img src="data:image/png;base64,{skills_chart}" alt="Top Skills" class="chart-img">
             </div>
-            <div class="chart-container">
+            <div id="chart3" class="chart-container">
                 <h3>Job Sources</h3>
+                <button class="expand-button" onclick="expandChart('chart3')">Expand</button>
                 <img src="data:image/png;base64,{sources_chart}" alt="Job Sources" class="chart-img">
             </div>
         </div>
@@ -320,11 +390,40 @@ class HtmlReportTask(BaseOperator):
         </div>
     </div>
 
+    <div id="overlay" class="overlay" onclick="closeExpandedChart()"></div>
+    <button id="closeButton" class="close-button" onclick="closeExpandedChart()">Close</button>
+
     <footer class="footer">
         <div class="container">
             <p>This report was generated automatically by the Job Search Pipeline.</p>
         </div>
     </footer>
+
+    <script>
+        function expandChart(chartId) {{
+            const chart = document.getElementById(chartId);
+            const overlay = document.getElementById('overlay');
+            const closeButton = document.getElementById('closeButton');
+
+            chart.classList.add('expanded');
+            overlay.style.display = 'block';
+            closeButton.style.display = 'block';
+
+            // Store the ID of the currently expanded chart
+            closeButton.setAttribute('data-expanded-chart', chartId);
+        }}
+
+        function closeExpandedChart() {{
+            const closeButton = document.getElementById('closeButton');
+            const chartId = closeButton.getAttribute('data-expanded-chart');
+            const chart = document.getElementById(chartId);
+            const overlay = document.getElementById('overlay');
+
+            chart.classList.remove('expanded');
+            overlay.style.display = 'none';
+            closeButton.style.display = 'none';
+        }}
+    </script>
 </body>
 </html>
         """
