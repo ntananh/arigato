@@ -1,5 +1,13 @@
 version: '3'
 services:
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - airflow_network
+
   postgres:
     image: postgres:13
     env_file:
@@ -16,6 +24,8 @@ services:
       test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-airflow}"]
       interval: 5s
       retries: 5
+    networks:
+      - airflow_network
 
   airflow-init:
     image: apache/airflow:2.7.1
@@ -44,6 +54,9 @@ services:
       airflow db init &&
       airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com
       "
+    networks:
+      - airflow_network
+
 
   airflow-webserver:
     image: apache/airflow:2.7.1
@@ -80,6 +93,9 @@ services:
       timeout: 10s
       retries: 5
 
+    networks:
+      - airflow_network
+
   airflow-scheduler:
     image: apache/airflow:2.7.1
     restart: always
@@ -106,6 +122,12 @@ services:
       python -c \"import nltk; nltk.download('punkt'); nltk.download('stopwords')\" &&
       airflow scheduler
       "
+    networks:
+      - airflow_network
+
+networks:
+  airflow_network:
+    driver: bridge
 
 volumes:
   postgres-db-volume:

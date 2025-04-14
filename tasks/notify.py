@@ -35,10 +35,8 @@ class NotificationTask(BaseOperator):
             logger.warning("No matched jobs found from upstream task")
             return False
 
-        # Get email from constructor or Variable if not provided
-        email = self.email or Variable.get('notification_email', '')
+        email = self.email or Variable.get('notification_email', 'anh.4.nguyen@tuni.fi')
 
-        # Filter jobs by minimum score
         qualifying_jobs = [job for job in matched_jobs if job.get('match_score', 0) >= self.min_score]
 
         if not qualifying_jobs:
@@ -47,7 +45,6 @@ class NotificationTask(BaseOperator):
 
         logger.info(f"Found {len(qualifying_jobs)} qualifying jobs for notification")
 
-        # Send notification
         success = self.notify(
             email=email,
             subject=self.subject,
@@ -74,17 +71,13 @@ class NotificationTask(BaseOperator):
 
         logger.info(f"Preparing notification for {email} with {len(jobs)} jobs")
 
-        # Limit number of jobs
         if max_jobs > 0:
             jobs = jobs[:max_jobs]
 
-        # Generate email content
         email_content = self._generate_email_content(jobs, subject)
 
-        # Send email
         success = self._send_email(email, subject, email_content)
 
-        # Mark jobs as notified in database (if applicable)
         if success:
             self._mark_jobs_as_notified(jobs)
 
@@ -95,10 +88,8 @@ class NotificationTask(BaseOperator):
         jobs: List[Dict[str, Any]],
         subject: str
     ) -> str:
-        # Format job details
         job_details = []
         for job in jobs:
-            # Format salary information
             salary_info = ""
             min_salary = job.get('salary_min', 0)
             max_salary = job.get('salary_max', 0)
@@ -111,16 +102,13 @@ class NotificationTask(BaseOperator):
                 else:
                     salary_info = f"{currency_symbol}{min_salary:,.0f} - {currency_symbol}{max_salary:,.0f}"
 
-            # Format location/remote info
             location_info = "Remote" if job.get('remote', False) else job.get('location', '')
 
-            # Format skills
             skills = job.get('skills', [])
             if isinstance(skills, str):
                 skills = [s.strip() for s in skills.split(',') if s.strip()]
             skills_text = ", ".join(skills)
 
-            # Format match score as percentage
             match_score = job.get('match_score', 0)
             match_percentage = f"{match_score * 100:.1f}%"
 
@@ -170,50 +158,33 @@ class NotificationTask(BaseOperator):
         subject: str,
         html_content: str
     ) -> bool:
-        # Get email settings from Variables
-        smtp_server = Variable.get('smtp_server', '')
-        smtp_port = int(Variable.get('smtp_port', '587'))
-        smtp_username = Variable.get('smtp_username', '')
-        smtp_password = Variable.get('smtp_password', '')
-        sender_email = Variable.get('sender_email', 'job-pipeline@example.com')
+        smtp_server = '172.17.0.1'
+        smtp_port = 1025
 
-        # Check if email settings are available
-        if not smtp_server or not smtp_username or not smtp_password:
-            logger.warning("Email settings are not configured. Would send email with the following content:")
-            logger.info(f"To: {recipient}")
-            logger.info(f"Subject: {subject}")
-            logger.info("Content: [HTML email content]")
-            return True  # Pretend it worked for pipeline flow
+        sender_email = Variable.get('sender_email', 'anh.4.nguyen@tuni.fi')
 
         try:
-            # Create message
+            server = smtplib.SMTP(smtp_server, smtp_port, timeout=10)
+
             msg = MIMEMultipart('alternative')
             msg['Subject'] = f"{subject} - {datetime.datetime.now().strftime('%Y-%m-%d')}"
             msg['From'] = sender_email
             msg['To'] = recipient
-
-            # Attach HTML content
             msg.attach(MIMEText(html_content, 'html'))
 
-            # Send email
-            with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()
-                server.login(smtp_username, smtp_password)
-                server.send_message(msg)
-
+            server.send_message(msg)
             logger.info(f"Email sent to {recipient}")
+
+            server.quit()
             return True
 
         except Exception as e:
-            logger.error(f"Error sending email: {str(e)}")
+            logger.error(f"Error sending email: {e}")
             return False
 
     def _mark_jobs_as_notified(self, jobs: List[Dict[str, Any]]) -> None:
-        # This would typically update a database to mark jobs as notified
-        # For this example, we'll just log the operation
         logger.info(f"Marked {len(jobs)} jobs as notified")
 
-        # If database operations are needed, you would use something like:
         # from airflow.providers.postgres.hooks.postgres import PostgresHook
         # pg_hook = PostgresHook(postgres_conn_id='postgres_default')
         # for job in jobs:

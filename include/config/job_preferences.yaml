@@ -1,19 +1,18 @@
 job_types:
+  - java developer
   - backend
-  - full-stack
   - software engineer
 
 skills:
   must_have:
-    - python
-    - sql
+    - java
+    - spring
     - api
   nice_to_have:
     - docker
-    - kubernetes
     - aws
-    - airflow
-    - data engineering
+    - typescript
+    - nextjs
 
 locations:
   remote: true
@@ -34,8 +33,10 @@ min_salary: 60000
 keywords:
   - remote
   - backend
-  - python
-  - data pipeline
+  - java
+  - spring
+  - spring boot
+  - hibernate
 
 excluded_terms:
   - wordpress
@@ -55,5 +56,5 @@ scoring:
   job_description_weight: 0.1
 
 notification:
-  min_score: 0.7
+  min_score: 0.5
   daily_limit: 5

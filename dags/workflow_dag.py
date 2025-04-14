@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import logging
 from datetime import datetime, timedelta
@@ -13,9 +14,10 @@ from tasks.collect import DataCollectionTask
 from tasks.job_matching import JobMatchingTask
 from tasks.load_preference import LoadPreferenceTask
 from tasks.notify import NotificationTask
+from tasks.persistent import JobDatabaseOperator
+from tasks.report import HtmlReportTask
 from tasks.verify import VerificationTask
 
-# Configure logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -30,7 +32,6 @@ default_args = {
 }
 
 def get_variable_with_fallback(name: str, default: Any) -> Any:
-    """Safely get and parse variables with fallback"""
     try:
         value = Variable.get(name, default_var=json.dumps(default))
         return json.loads(value)
@@ -39,20 +40,17 @@ def get_variable_with_fallback(name: str, default: Any) -> Any:
         raise AirflowException(f"Configuration error: Invalid {name} variable")
 
 def validate_sources(sources: List[str]) -> None:
-    """Validate data sources configuration"""
     if not isinstance(sources, list) or len(sources) == 0:
         raise AirflowException("data_sources must be a non-empty list")
     if any(not source or not isinstance(source, str) for source in sources):
         raise AirflowException("All sources must be non-empty strings")
 
 def create_collection_tasks(dag: DAG) -> Dict[str, BaseOperator]:
-    """Create dynamic collection tasks for each data source"""
-    # Get configuration
     sources = get_variable_with_fallback('data_sources', ["linkedin", "upwork"])
     job_types = get_variable_with_fallback('job_types', ["software engineer", "data scientist"])
     keywords = get_variable_with_fallback('keywords', ["python", "machine learning"])
-    locations = get_variable_with_fallback('locations', ["remote", "san francisco"])
-    max_results = int(Variable.get('max_results', '50'))
+    locations = get_variable_with_fallback('locations', ["remote", "finland"])
+    max_results = int(Variable.get('max_results', '100'))
 
     validate_sources(sources)
 
@@ -89,38 +87,43 @@ with DAG(
     tags=['jobs', 'data_pipeline'],
 ) as dag:
 
-    # 1. Load preferences
     load_preferences = LoadPreferenceTask(
         task_id='load_preferences',
         dag=dag
     )
 
-    # 2. Verification task
     verify_input = VerificationTask(
         task_id='verify_input',
         dag=dag
     )
 
-    # 3. Create dynamic collection tasks
     collection_tasks = create_collection_tasks(dag)
 
-    # 4. Data cleaning task
     clean_data = DataCleaningTask(
         task_id='clean_data',
         csv_output_dir='data/clean',
         dag=dag
     )
 
-    # 5. Job matching task
     match_jobs = JobMatchingTask(
         task_id='match_jobs',
         preferences_task_id='load_preferences',
         dag=dag
     )
 
-    # 6. Notification task
-    email = Variable.get('notification_email', 'tony@tuni.fi')
-    min_score = float(Variable.get('min_match_score', '0.7'))
+    generate_report = HtmlReportTask(
+        task_id='generate_report',
+        output_dir='data/reports',
+        dag=dag
+    )
+
+    save_jobs_task = JobDatabaseOperator(
+        task_id='save_matched_jobs',
+        dag=dag
+    )
+
+    email = Variable.get('notification_email', 'anh.4.nguyen@tuni.fi')
+    min_score = float(Variable.get('min_match_score', '0.5'))
     max_notify_jobs = int(Variable.get('max_notification_jobs', '10'))
 
     send_notifications = NotificationTask(
@@ -131,14 +134,12 @@ with DAG(
         dag=dag
     )
 
-    # Define task dependencies
     verify_input >> list(collection_tasks.values())
     for task in collection_tasks.values():
         task >> clean_data
 
     load_preferences >> match_jobs
     clean_data >> match_jobs
-    match_jobs >> send_notifications
+    match_jobs >> [generate_report, send_notifications, save_jobs_task]
 
-    # Log DAG structure
     logger.info("DAG structure created successfully")

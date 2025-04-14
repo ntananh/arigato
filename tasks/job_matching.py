@@ -117,7 +117,7 @@ class JobMatchingTask(BaseOperator):
 
             from ml_models.job_matcher_model import JobMatcherModel
 
-            preferences_path = Variable.get('preferences_path', '')
+            preferences_path = Variable.get('preferences_path', 'include/config/job_preferences.yaml')
 
             if preferences_path and os.path.exists(preferences_path):
                 matcher = JobMatcherModel(preferences_path)
