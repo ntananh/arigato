@@ -7,6 +7,7 @@ from typing import Dict, Any, List
 
 from airflow.models import BaseOperator, Variable
 from airflow.utils.decorators import apply_defaults
+from airflow.exceptions import AirflowException
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,10 @@ class NotificationTask(BaseOperator):
             max_jobs=self.max_jobs
         )
 
+        if not success:
+            # Raise an exception if email sending failed
+            raise AirflowException("Failed to send notification email")
+
         return success
 
     def notify(
@@ -80,6 +85,8 @@ class NotificationTask(BaseOperator):
 
         if success:
             self._mark_jobs_as_notified(jobs)
+        else:
+            logger.error("Email sending failed - not marking jobs as notified")
 
         return success
 
@@ -180,7 +187,7 @@ class NotificationTask(BaseOperator):
 
         except Exception as e:
             logger.error(f"Error sending email: {e}")
-            return False
+            raise AirflowException(f"Error sending email: {e}")
 
     def _mark_jobs_as_notified(self, jobs: List[Dict[str, Any]]) -> None:
         logger.info(f"Marked {len(jobs)} jobs as notified")
