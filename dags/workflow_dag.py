@@ -92,8 +92,8 @@ with DAG(
         dag=dag
     )
 
-    verify_input = VerificationTask(
-        task_id='verify_input',
+    verify_env = VerificationTask(
+        task_id='verify_env',
         dag=dag
     )
 
@@ -134,7 +134,7 @@ with DAG(
         dag=dag
     )
 
-    verify_input >> list(collection_tasks.values())
+    verify_env >> list(collection_tasks.values())
     for task in collection_tasks.values():
         task >> clean_data
 
